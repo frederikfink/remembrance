@@ -106,7 +106,7 @@
 {#if !$page.data.session}
 	<span />
 {:else}
-	<div id="items-container" class="p-2 grow mb-20 flex flex-col justify-end">
+	<div id="items-container" class="p-2 grow pb-20 flex flex-col justify-end">
 		{#each messages as message}
 			<div class="flex py-2 gap-4 rounded-lg my-2">
 				<div>
