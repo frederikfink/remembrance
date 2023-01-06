@@ -24,16 +24,18 @@
 		};
 	});
 </script>
+
 <nav class="h-12 w-full fixed border-b flex items-center p-2">
 	<a href="/">
 		Rɪˈmɛmbr(ə)ns
 	</a>
 	<a href="/profile" class="avatar placeholder ml-auto">
 		<div class="bg-neutral-focus text-neutral-content rounded-full w-8">
-			<span class="text-xs capitalize">{($page.data.session.user.email).substring(0, 1)}</span>
+			<span class="text-xs capitalize">P</span>
 		</div>
 	</a>
 </nav>
+
 <div class="pt-12 h-screen flex flex-col ">
 	<slot />
 </div>
