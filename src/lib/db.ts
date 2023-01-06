@@ -1,10 +1,7 @@
-import { env } from '$env/dynamic/public';
 import { createClient } from '@supabase/auth-helpers-sveltekit';
-
-const supabaseUrl = env.PUBLIC_SUPABASE_URL as string
-const supabaseAnonKey = env.PUBLIC_SUPABASE_ANON_KEY as string
+import { PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_URL } from '$env/static/public';
 
 export const supabase = createClient(
-    supabaseUrl,
-    supabaseAnonKey
+    PUBLIC_SUPABASE_URL,
+    PUBLIC_SUPABASE_ANON_KEY
 );
