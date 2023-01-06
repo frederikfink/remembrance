@@ -6,7 +6,40 @@
 
 	let messages: any[] = [];
 	let newItemName: null | string = null;
-	let lastModifiedItem : null|Item = null;
+	let lastModifiedItem: null | Item = null;
+	let loading: boolean = false;
+	const dateNow = new Date();
+
+	const formatDate = (date: string) => {
+		const seconds = Math.floor((dateNow.getTime() - new Date(date).getTime()) / 1000);
+
+		let interval = seconds / 31536000;
+
+		if (seconds < 0) {
+			return 'just now';
+		}
+
+		if (interval > 1) {
+			return `${Math.floor(interval)} years ago`;
+		}
+		interval = seconds / 2592000;
+		if (interval > 1) {
+			return `${Math.floor(interval)} months ago`;
+		}
+		interval = seconds / 86400;
+		if (interval > 1) {
+			return `${Math.floor(interval)} days ago`;
+		}
+		interval = seconds / 3600;
+		if (interval > 1) {
+			return `${Math.floor(interval)} hours ago`;
+		}
+		interval = seconds / 60;
+		if (interval > 1) {
+			return `${Math.floor(interval)} minutes ago`;
+		}
+		return Math.floor(seconds) + ` seconds ago`;
+	};
 
 	onMount(async () => {
 		const { error, data } = await supabase.from('items').select('*').eq('completed', false);
@@ -24,7 +57,7 @@
 				messages = messages.filter((m) => m.id !== payload.old.id);
 			})
 			.on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'items' }, (payload) => {
-				if(payload.new.completed == true) {
+				if (payload.new.completed == true) {
 					messages = messages.filter((m) => m.id !== payload.new.id);
 				}
 			})
@@ -32,31 +65,37 @@
 	});
 
 	const addItem = async () => {
-		if(newItemName == null || newItemName == '') throw new Error("new items must have a name");
-		
-		const {error} = await supabase.from('items').insert([{
-			name: newItemName
-		}])
+		if (newItemName == null || newItemName == '') throw new Error('new items must have a name');
 
-		if(error) throw new Error(error.message);
+		loading = true;
+
+		const { error } = await supabase.from('items').insert([
+			{
+				name: newItemName
+			}
+		]);
+
+		loading = false;
+
+		if (error) throw new Error(error.message);
 
 		newItemName = '';
 	};
 
 	const removeItem = async (id: number) => {
-		if(id == 0) throw new Error("id cannot be 0");
+		if (id == 0) throw new Error('id cannot be 0');
 
-		const {error} = await supabase.from('items').delete().eq('id', id);
+		const { error } = await supabase.from('items').delete().eq('id', id);
 
-		if(error) throw new Error(error.message);
+		if (error) throw new Error(error.message);
 	};
 
 	const completeItem = async (id: number) => {
-		if(id == 0) throw new Error("id cannot be 0");
-		
-		const {error} = await supabase.from('items').update({completed: true}).eq('id', id);
+		if (id == 0) throw new Error('id cannot be 0');
 
-		if(error) throw new Error(error.message);
+		const { error } = await supabase.from('items').update({ completed: true }).eq('id', id);
+
+		if (error) throw new Error(error.message);
 	};
 
 	onDestroy(() => {
@@ -67,27 +106,17 @@
 {#if !$page.data.session}
 	<span />
 {:else}
-	<div class="flex w-100 gap-4 p-2 border-b">
-		<button class="btn btn-outline btn-info gap-2">
-			Groceries
-			<div class="badge">2</div>
-		</button>
-		<button class="btn btn-outline gap-2">
-			Wishlist
-			<div class="badge">+99</div>
-		</button>
-	</div>
-
-	<div id="items-container" class="p-2 grow mb-12 flex flex-col justify-end divide-y">
+	<div id="items-container" class="p-2 grow mb-20 flex flex-col justify-end">
 		{#each messages as message}
-			<div class=" flex py-2 gap-4">
+			<div class="flex py-2 gap-4 rounded-lg my-2">
 				<div>
-					<h4 class="font-semibold m-0">{message.name}</h4>
-					<small class="m-0">{message.created_at}</small>
+					<h4 class="font-semibold text-neutral">{message.name}</h4>
+					<small class="m-0 primary-content base-content font-mono">{formatDate(message.created_at)}</small>
 				</div>
+				<div class="btn-group ml-auto">
 				<button
 					on:click={() => removeItem(message.id)}
-					class="ml-auto btn btn-outline btn-warning h-full"
+					class="btn btn-outline btn-warning h-full"
 				>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
@@ -119,19 +148,22 @@
 						/></svg
 					>
 				</button>
+				</div>
 			</div>
+			<hr class="border-base-300">
 		{/each}
 	</div>
-	<div class="fixed bottom-0 w-full">
+
+	<div class="fixed bottom-0 w-full px-2 py-4 backdrop-blur-xl border-t border-primary">
 		<form on:submit|preventDefault={addItem}>
 			<div class="input-group">
 				<input
 					bind:value={newItemName}
 					type="text"
 					placeholder="Add item…"
-					class="input input-bordered w-full"
+					class="input input-bordered w-full input-primary"
 				/>
-				<button class="btn">Add</button>
+				<button class="btn {loading ? 'loading' : ''}">Add</button>
 			</div>
 		</form>
 	</div>
