@@ -25,7 +25,7 @@
 	});
 </script>
 
-<nav class="h-12 w-full fixed flex items-center p-2 border-b border-primary backdrop-blur-xl">
+<nav class="h-12 w-full fixed flex items-center p-2 border-b border-base-300 backdrop-blur-xl">
 	<a href="/">
 		Rɪˈmɛmbr(ə)ns
 	</a>
