@@ -4,7 +4,7 @@
 	import type { Item } from '$lib/types/types';
 	import { onDestroy, onMount } from 'svelte';
 
-	let messages: any[] = [];
+	let items: any[] = [];
 	let newItemName: null | string = null;
 	let lastModifiedItem: null | Item = null;
 	let loading: boolean = false;
@@ -41,28 +41,38 @@
 		return Math.floor(seconds) + ` seconds ago`;
 	};
 
+    const fetchGroup = async () => {
+        const { data, error } = await supabase.from('groups').select('*').eq('id', $page.params.group);
+
+        if(error) throw new Error(error.message);
+
+        console.log(data[0]);
+        return data[0];
+    }
+
 	onMount(async () => {
+
 		const { error, data } = await supabase
 			.from('items')
 			.select('*')
 			.eq('group_id', $page.params.group)
 			.eq('completed', false);
 
-		if (data == null) throw new Error(error.message);
+		if (error) throw new Error(error.message);
 
-		messages = data;
+		items = data;
 
 		supabase
 			.channel('public:items')
 			.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'items' }, (payload) => {
-				messages = [...messages, payload.new];
+				items = [...items, payload.new];
 			})
 			.on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'items' }, (payload) => {
-				messages = messages.filter((m) => m.id !== payload.old.id);
+				items = items.filter((m) => m.id !== payload.old.id);
 			})
 			.on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'items' }, (payload) => {
 				if (payload.new.completed == true) {
-					messages = messages.filter((m) => m.id !== payload.new.id);
+					items = items.filter((m) => m.id !== payload.new.id);
 				}
 			})
 			.subscribe();
@@ -108,21 +118,30 @@
 	});
 </script>
 
+{#await fetchGroup()}
+    loading...
+{:then data} 
+    <div class="border-b border-base-300 px-2 py-4">
+        <h2 class="text-xl">{data.title}</h2>
+    </div>
+    
+{/await}
+
 {#if !$page.data.session}
 	<span />
 {:else}
 	<div id="items-container" class="p-2 grow pb-20 flex flex-col justify-end">
-		{#each messages as message}
+		{#each items as item}
 			<div class="flex py-2 gap-4 rounded-lg my-2">
 				<div>
-					<h4 class="font-semibold text-neutral">{message.name}</h4>
+					<h4 class="font-semibold text-neutral">{item.name}</h4>
 					<small class="m-0 primary-content base-content font-mono"
-						>{formatDate(message.created_at)}</small
+						>{formatDate(item.created_at)}</small
 					>
 				</div>
 				<div class="btn-group ml-auto">
 					<button
-						on:click={() => removeItem(message.id)}
+						on:click={() => removeItem(item.id)}
 						class="btn btn-outline btn-warning h-full"
 					>
 						<svg
@@ -139,7 +158,7 @@
 						>
 					</button>
 					<button
-						on:click={() => completeItem(message.id)}
+						on:click={() => completeItem(item.id)}
 						class="btn btn-outline btn-success h-full"
 					>
 						<svg

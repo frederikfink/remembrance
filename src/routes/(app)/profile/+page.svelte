@@ -42,7 +42,7 @@
 </script>
 
 <div>
-	<h2 class="py-8 px-2 border-b border-base-300 text-2xl">Groups</h2>
+	<h2 class="py-4 px-2 border-b border-base-300 text-2xl">Groups</h2>
 	<div class="py-4 flex flex-col gap-2 border-b border-base-300">
 	{#await fetchGroups()}
 		<div class="px-2">loading groups..</div>
