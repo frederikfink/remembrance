@@ -45,18 +45,18 @@
 	<h2 class="py-8 px-2 border-b border-base-300 text-2xl">Groups</h2>
 	<div class="py-4 flex flex-col gap-2 border-b border-base-300">
 	{#await fetchGroups()}
-			loading groups..
-		{:then groups}
-			{#each groups as group}
-				<Group
-					title={group.title}
-					members={0}
-					items={0}
-					description={group.description}
-					id={group.id}
-				/>
-			{/each}
-		{/await}
+		<div class="px-2">loading groups..</div>
+	{:then groups}
+		{#each groups as group}
+			<Group
+				title={group.title}
+				members={0}
+				items={0}
+				description={group.description}
+				id={group.id}
+			/>
+		{/each}
+	{/await}
 	</div>
 
 	<div class="flex py-4 px-2">
