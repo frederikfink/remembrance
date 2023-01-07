@@ -41,16 +41,33 @@
 		return Math.floor(seconds) + ` seconds ago`;
 	};
 
-    const fetchGroup = async () => {
-        const { data, error } = await supabase.from('groups').select('*').eq('id', $page.params.group);
+	const fetchGroup = async () => {
+		const { data, error } = await supabase.from('groups').select('*').eq('id', $page.params.group);
+
+		if (error) throw new Error(error.message);
+
+		console.log(data[0]);
+		return data[0];
+	};
+
+    const isMemberOfGroup = async () : Promise<boolean> => {
+		const { error, data } = await supabase
+			.from('group_members')
+			.select('*')
+			.eq('group_id', $page.params.group)
+			.eq('member_id', $page.data.session?.user.id);
 
         if(error) throw new Error(error.message);
 
-        console.log(data[0]);
-        return data[0];
+        return data.length === 0 ? false : true;
+        
     }
 
 	onMount(async () => {
+
+        const isMember:boolean = await isMemberOfGroup();
+
+        if(!isMember) throw new Error("user not member of group");
 
 		const { error, data } = await supabase
 			.from('items')
@@ -86,7 +103,7 @@
 		const { error } = await supabase.from('items').insert([
 			{
 				name: newItemName,
-                group_id: $page.params.group
+				group_id: $page.params.group
 			}
 		]);
 
@@ -119,12 +136,11 @@
 </script>
 
 {#await fetchGroup()}
-    loading...
-{:then data} 
-    <div class="border-b border-base-300 px-2 py-4">
-        <h2 class="text-xl">{data.title}</h2>
-    </div>
-    
+	loading...
+{:then data}
+	<div class="border-b border-base-300 px-2 py-4">
+		<h2 class="text-xl">{data.title}</h2>
+	</div>
 {/await}
 
 {#if !$page.data.session}
@@ -140,10 +156,7 @@
 					>
 				</div>
 				<div class="btn-group ml-auto">
-					<button
-						on:click={() => removeItem(item.id)}
-						class="btn btn-outline btn-warning h-full"
-					>
+					<button on:click={() => removeItem(item.id)} class="btn btn-outline btn-warning h-full">
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
 							class="stroke-current flex-shrink-0 h-6 w-6"
@@ -157,10 +170,7 @@
 							/></svg
 						>
 					</button>
-					<button
-						on:click={() => completeItem(item.id)}
-						class="btn btn-outline btn-success h-full"
-					>
+					<button on:click={() => completeItem(item.id)} class="btn btn-outline btn-success h-full">
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
 							class="stroke-current flex-shrink-0 h-6 w-6"

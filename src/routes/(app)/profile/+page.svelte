@@ -26,8 +26,22 @@
 		return data;
 	};
 
+	const addGroupMember = async (groupId:number, memberId:string) => {
+		if(groupId == 0 || memberId == '') throw new Error("bad ids");
+		
+		const {data, error} = await supabase.from('group_members').insert({
+			group_id: groupId,
+			member_id: memberId
+		})
+
+		if(error) throw new Error(error.message);
+		
+
+	}
+
 	const addGroup = async () => {
 		if (addGroupTitle == '') throw new Error('Title cannot be empty');
+		if ($page.data.session == undefined) throw new Error("session invalid");
 
 		const { error, data } = await supabase.from('groups').insert({
 			title: addGroupTitle,
@@ -36,6 +50,8 @@
 		}).select();
 
 		if (error) throw new Error(error.message);
+
+		addGroupMember(data[0].id, $page.data.session?.user.id);
 
 		goto(`/${data[0].id}`);
 	};
